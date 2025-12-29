@@ -1,0 +1,30 @@
+{
+  "name": "cook-a-brainrot",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@quenty/attributeutils": "^14.20.1",
+    "@quenty/baseobject": "^10.9.0",
+    "@quenty/binder": "^14.25.2",
+    "@quenty/blend": "^12.22.2",
+    "@quenty/brio": "^14.20.1",
+    "@quenty/clienttranslator": "^14.23.2",
+    "@quenty/cmdrservice": "^13.29.3",
+    "@quenty/loader": "^10.9.0",
+    "@quenty/maid": "^3.5.0",
+    "@quenty/observablecollection": "^12.24.4",
+    "@quenty/rx": "^13.20.0",
+    "@quenty/servicebag": "^11.13.1",
+    "@quenty/sounds": "^10.13.0",
+    "@quenty/valueobject": "^13.21.2"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}
