@@ -1,7 +1,4 @@
 {
-    "luau-lsp.sourcemap.enabled": true,
-    "luau-lsp.plugin.enabled": true,
-    "luau-lsp.sourcemap.generatorCommand": "",
-    "luau-lsp.sourcemap.useVSCodeWatcher": true,
-    "luau-lsp.sourcemap.rojoPath": ""
+	"search.useIgnoreFiles": false
 }
+

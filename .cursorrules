@@ -1,0 +1,85 @@
+# NevermoreEngine Package Search Guide
+
+This repository contains 270+ packages for Roblox development. Use this guide to quickly find packages and their installation information.
+
+The NevermoreEngine packages are located in the `NevermoreEngine/` subdirectory.
+
+## Package Structure
+
+- **Location**: All packages are in `NevermoreEngine/src/<packagename>/`
+- **NPM Package**: `@quenty/<packagename>`
+- **Installation**: `npm install @quenty/<packagename> --save`
+- **Documentation**: Each package has a `README.md` with description and installation info
+- **API Docs**: https://quenty.github.io/NevermoreEngine/api/<PackageName>
+- **Package Info**: Each package has a `package.json` with description, keywords, and dependencies
+
+## Quick Search Strategies
+
+### 1. Search by Directory Name
+If you know the approximate package name, search directories:
+```bash
+# List all package directories
+ls NevermoreEngine/src/
+# Or search for specific pattern
+grep -r "packagename" NevermoreEngine/src/*/package.json
+```
+
+### 2. Search by Description/Keywords in package.json
+Search the `description` or `keywords` fields:
+```bash
+# Search descriptions
+grep -r -i "description.*animation" NevermoreEngine/src/*/package.json
+# Search keywords
+grep -r -i "keyword.*binder" NevermoreEngine/src/*/package.json
+```
+
+### 3. Search README Files
+Each package has a README.md with a description:
+```bash
+# Search all README files for a term
+grep -r -i "utility.*object" NevermoreEngine/src/*/README.md
+```
+
+### 4. Search Source Code
+Search actual implementation files for functionality:
+```bash
+# Search .lua files for class names or functionality
+grep -r "class.*Maid" NevermoreEngine/src/maid/src/
+```
+
+## Common Package Patterns
+
+- **Utils**: Utility functions (e.g., `maid`, `signal`, `promise`, `binder`)
+- **Services**: Server/client services (e.g., `datastore`, `camera`)
+- **Mixins**: Reusable mixins (e.g., `enabledmixin`, `mouseovermixin`)
+- **Binders**: Specialized binders (e.g., `playerbinder`, `playerhumanoidbinder`)
+
+## Answering "Does a package for X exist?"
+
+1. **Try semantic search first**: Use grep with case-insensitive search across README.md and package.json files
+2. **Check common naming patterns**: Many packages follow `{functionality}utils`, `{functionality}service`, etc.
+3. **Look at package list**: The main `NevermoreEngine/readme.md` has a complete package list with descriptions (line 58+)
+4. **Provide format**: When found, provide:
+   - Package name (directory name)
+   - NPM package: `@quenty/<packagename>`
+   - Installation: `npm install @quenty/<packagename> --save`
+   - Brief description from README or package.json
+   - API docs link: `https://quenty.github.io/NevermoreEngine/api/<PackageName>`
+
+## Example Workflow
+
+User asks: "Does a package for animation exist?"
+
+1. Search descriptions: `grep -r -i "animation" NevermoreEngine/src/*/package.json | head -20`
+2. Check README files: `grep -r -i "animation" NevermoreEngine/src/*/README.md | head -20`
+3. List relevant packages (e.g., `animations`, `animationprovider`, `animationgroup`, `animationtrackutils`)
+4. Provide: Package name, install command, description, and docs link
+
+## Important Notes
+
+- Package names in directory are lowercase (e.g., `maid`, `binder`)
+- NPM packages are `@quenty/<lowercase-packagename>`
+- API docs use PascalCase (e.g., `Maid`, `Binder`)
+- Always verify installation command in the package's README.md
+- Check package.json for dependencies if needed
+
