@@ -1,9 +1,12 @@
 local require = require(script.Parent.loader).load(script)
 
+local Workspace = game:GetService("Workspace")
+
 local Maid = require("Maid")
 local ServiceBag = require("ServiceBag")
-local Binder = require("Binder")
-local PlayerPlotBinder = require("PlayerPlotBinder")
+local Blend = require("Blend")
+local RxPlayerUtils = require("RxPlayerUtils")
+local RxCharacterUtils = require("RxCharacterUtils")
 
 local PlotService = {} :: PlotService
 PlotService.ServiceName = "PlotService"
@@ -11,8 +14,7 @@ PlotService.ServiceName = "PlotService"
 export type PlotService = typeof(PlotService) & {
     _serviceBag: ServiceBag.ServiceBag,
     _maid: Maid.Maid,
-
-    _playerPlotBinder: Binder.Binder<PlayerPlotBinder.PlayerPlotBinder>
+    _plotFolder: Folder,
 }
 
 function PlotService.Init(self: PlotService, serviceBag: ServiceBag.ServiceBag)
@@ -20,46 +22,48 @@ function PlotService.Init(self: PlotService, serviceBag: ServiceBag.ServiceBag)
     self._serviceBag = assert(serviceBag, "No serviceBag")
     self._maid = Maid.new()
 
-    self._playerPlotBinder = serviceBag:GetService(PlayerPlotBinder) :: Binder.Binder<PlayerPlotBinder.PlayerPlotBinder>
-
-    
-    -- self._plots = ObservableList.new() :: ObservableList.ObservableList<PlayerPlot.PlayerPlot>
-    -- self._assignedPlots = ObservableMap.new()
-
-    -- self._maid:GiveTask(self._plots)
-    -- self._maid:GiveTask(self._assignedPlots)
+    local gameFolder = Workspace:WaitForChild("Game")
+    self._plotFolder = gameFolder:WaitForChild("Plots")
 end
 
-function PlotService.Start(self: PlotService) 
+function PlotService.Start(self: PlotService)
+    self._maid:GiveTask(RxPlayerUtils.observePlayersBrio():Subscribe(function(brio)
+        local maid, player: Player = brio:ToMaidAndValue()
+
+        local freePlot = self:_getFreshPlot()
+
+        freePlot:SetAttribute("PlayerName", player.Name)
+        freePlot:AddTag("PlayerRestaurant")
+
+        maid:GiveTask(Blend.New "ObjectValue" {
+            Name = "Plot",
+            Value = freePlot,
+        }:Subscribe(function(objectValue)
+            objectValue.Parent = player
+        end))
+
+        maid:GiveTask(RxCharacterUtils.observeCharacter(player):Subscribe(function(character: Model)
+            if (not character) then
+                return
+            end
     
-    
-    -- local plotBinder = self._gameBindersServer:Get("PlayerPlot")
+            local playerSpawnPart = freePlot:FindFirstChild("PlayerSpawn")
 
-    -- self._maid:GiveTask(plotBinder:ObserveAllBrio():Subscribe(function(brio)
-    --     local maid, plot = brio:ToMaidAndValue()
+            character:PivotTo(playerSpawnPart:GetPivot() + Vector3.new(0, 5, 0))
+        end))
 
-    --     maid:GiveTask(self._plots:Add(plot))
-    -- end))
-
-    -- self._maid:GiveTask(Players.PlayerAdded:Connect(function(player)
-        
-    
-    --     print(player.Name, "joined the game!")
-
-    --     print(self._plots:GetCount())
-
-    -- end))
-
-    -- self._maid:GiveTask(Players.PlayerRemoving:Connect(function(player)
-        
-    -- end))
+        maid:GiveTask(function()
+            freePlot:SetAttribute("PlayerName", nil)
+            freePlot:RemoveTag("PlayerRestaurant")
+        end)
+    end))
 end
 
-function PlotService:_getFreshPlot()
-    local plots = self._plots:GetList()
+function PlotService._getFreshPlot(self: PlotService): Model?
+    local plots = self._plotFolder:GetChildren()
 
     for _, plot in plots do
-        if (plot:IsAssigned()) then
+        if (plot:HasTag("PlayerRestaurant")) then
             continue;
         end
 
