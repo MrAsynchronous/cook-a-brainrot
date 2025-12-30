@@ -2,7 +2,11 @@ local require = require(script.Parent.loader).load(script)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
+local Observable = require("Observable")
+local Rx = require("Rx")
+local RxAttributeUtils = require("RxAttributeUtils")
 local ServiceBag = require("ServiceBag")
 
 export type Rarity = Configuration & {
@@ -24,49 +28,73 @@ export type Brainrot = ObjectValue & {
 	Recipe: Folder,
 }
 
-local ItemService = {}
-ItemService.ServiceName = "ItemService"
+export type Backpack = ObjectValue & {
+	Value: Model,
+	Capacity: NumberValue,
+}
 
-export type ItemService = typeof(ItemService) & {
+local ConfigService = {}
+ConfigService.ServiceName = "ConfigService"
+
+export type ConfigService = typeof(ConfigService) & {
 	_serviceBag: ServiceBag.ServiceBag,
 
 	_configContainer: Configuration & {
 		Brainrot: Folder,
 		Ingredients: Folder,
 		ItemRarities: Folder,
+		Backpacks: Folder,
 	},
 	_assetsFolder: Folder & {
 		Brainrot: Folder,
 		Ingredients: Folder,
+		Backpacks: Folder,
 	},
 	_droppedIngredientsFolder: Folder,
 }
 
-function ItemService.GetItemRarities(self: ItemService): { Rarity }
+function ConfigService.GetItemRarities(self: ConfigService): { Rarity }
 	return self._configContainer.ItemRarities:GetChildren() :: { Rarity }
 end
 
-function ItemService.GetRarity(self: ItemService, rarityName: string): Rarity
+function ConfigService.GetRarity(self: ConfigService, rarityName: string): Rarity
 	return self._configContainer.ItemRarities:FindFirstChild(rarityName) :: Rarity
 end
 
-function ItemService.GetIngredients(self: ItemService): { Ingredient }
+function ConfigService.GetIngredients(self: ConfigService): { Ingredient }
 	return self._configContainer.Ingredients:GetChildren() :: { Ingredient }
 end
 
-function ItemService.GetIngredient(self: ItemService, ingredientName: string): Ingredient?
+function ConfigService.GetIngredient(self: ConfigService, ingredientName: string): Ingredient?
 	return self._configContainer.Ingredients:FindFirstChild(ingredientName) :: Ingredient
 end
 
-function ItemService.GetDroppedIngredientsFolder(self: ItemService): Folder
+function ConfigService.GetBackpacks(self: ConfigService): { Backpack }
+	return self._configContainer.Backpacks:GetChildren() :: { Backpack }
+end
+
+function ConfigService.GetBackpack(self: ConfigService, backpackName: string): Backpack
+	return self._configContainer.Backpacks:FindFirstChild(backpackName) :: Backpack
+end
+
+function ConfigService.GetDroppedIngredientsFolder(self: ConfigService): Folder
 	return self._droppedIngredientsFolder
 end
 
-function ItemService.GetGeneralConfig(self: ItemService): Configuration
+function ConfigService.GetGeneralConfigValue<T>(self: ConfigService, config: string): T?
+	return self._configContainer:GetAttribute(config) :: T?
+end
+
+function ConfigService.ObserveGeneralConfig<T>(self: ConfigService, config: string): Observable.Observable<T?>
+	local generalConfig = self._configContainer
+	return RxAttributeUtils.observeAttribute(generalConfig, config)
+end
+
+function ConfigService.GetConfigContainer(self: ConfigService): Configuration
 	return self._configContainer
 end
 
-function ItemService.Init(self: ItemService, serviceBag: ServiceBag.ServiceBag)
+function ConfigService.Init(self: ConfigService, serviceBag: ServiceBag.ServiceBag)
 	self._serviceBag = serviceBag
 
 	if RunService:IsServer() then
@@ -76,7 +104,7 @@ function ItemService.Init(self: ItemService, serviceBag: ServiceBag.ServiceBag)
 	end
 end
 
-function ItemService._initServer(self: ItemService)
+function ConfigService._initServer(self: ConfigService)
 	if not RunService:IsServer() then
 		return
 	end
@@ -94,7 +122,7 @@ function ItemService._initServer(self: ItemService)
 	self._droppedIngredientsFolder.Name = "Dropped Ingredients"
 end
 
-function ItemService._initClient(self: ItemService)
+function ConfigService._initClient(self: ConfigService)
 	if not RunService:IsClient() then
 		return
 	end
@@ -104,4 +132,4 @@ function ItemService._initClient(self: ItemService)
 	self._droppedIngredientsFolder = Workspace:WaitForChild("Dropped Ingredients")
 end
 
-return ItemService
+return ConfigService

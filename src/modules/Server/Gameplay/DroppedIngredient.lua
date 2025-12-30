@@ -3,11 +3,13 @@ local require = require(script.Parent.loader).load(script)
 local AttributeValue = require("AttributeValue")
 local Binder = require("Binder")
 local Blend = require("Blend")
+local ConfigService = require("ConfigService")
 local GamebeastService = require("GamebeastService")
-local ItemService = require("ItemService")
 local Maid = require("Maid")
 local ModelUtils = require("ModelUtils")
-local PlayerRestaurant = require("PlayerRestaurant")
+local PlayerRestaurantServer = require("PlayerRestaurantServer")
+local PlayerUtils = require("PlayerUtils")
+local Rx = require("Rx")
 local ServiceBag = require("ServiceBag")
 
 local DroppedIngredient = {}
@@ -17,12 +19,14 @@ DroppedIngredient.ServiceName = "DroppedIngredient"
 export type DroppedIngredient = typeof(DroppedIngredient) & {
 	_serviceBag: ServiceBag.ServiceBag,
 	_maid: Maid.Maid,
-	_instance: Instance,
-	_itemService: ItemService.ItemService,
+
+	_configService: ConfigService.ConfigService,
 	_gamebeastService: GamebeastService.GamebeastService,
-	_playerRestaurant: Binder.Binder<PlayerRestaurant.PlayerRestaurant>,
+	_playerRestaurant: Binder.Binder<PlayerRestaurantServer.PlayerRestaurantServer>,
+
+	_instance: Instance,
 	_ingredientName: AttributeValue.AttributeValue<string>,
-	_ingredient: ItemService.Ingredient,
+	_ingredient: ConfigService.Ingredient,
 }
 
 function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
@@ -31,20 +35,25 @@ function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.Servic
 	self._serviceBag = assert(serviceBag, "No service bag")
 	self._maid = Maid.new()
 
-	self._itemService = serviceBag:GetService(ItemService)
+	self._configService = serviceBag:GetService(ConfigService)
 	self._gamebeastService = serviceBag:GetService(GamebeastService)
-	self._playerRestaurant = serviceBag:GetService(PlayerRestaurant)
+	self._playerRestaurant = serviceBag:GetService(PlayerRestaurantServer)
 
 	self._instance = assert(instance, "No instance")
 	self._ingredientName = AttributeValue.new(self._instance, "IngredientName")
 	self._collected = AttributeValue.new(self._instance, "Collected", false)
 
-	self._ingredient = self._itemService:GetIngredient(self._ingredientName.Value)
+	self._ingredient = self._configService:GetIngredient(self._ingredientName.Value)
 
 	self._proximityPromptRender = Blend.New "ProximityPrompt" {
 		ActionText = "Pickup",
 		ObjectText = self._ingredientName.Value,
 		RequiresLineOfSight = false,
+		Enabled = self._collected:Observe():Pipe({
+			Rx.map(function(collected: boolean)
+				return not collected
+			end),
+		}),
 
 		[Blend.OnEvent "Triggered"] = function(player: Player)
 			if self._collected.Value then
@@ -67,19 +76,25 @@ function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.Servic
 end
 
 function DroppedIngredient._collectIngredient(self: DroppedIngredient, player: Player)
-	self._gamebeastService:TrackUserEvent(player, "IngredientCollected", {
+	self._gamebeastService:TrackPlayerEvent(player, "IngredientCollected", {
 		IngredientName = self._ingredientName.Value,
 	})
 
-	local playerPlot = player:FindFirstChild("Plot").Value
+	local playerPlot = PlayerUtils.getPlayerPlot(player)
 	if not playerPlot then
-		return
+		return self._gamebeastService:TrackPlayerEventDebug(player, "NoPlayerPlot", {
+			action = "IngredientCollected",
+		})
 	end
 
-	local pantry = playerPlot:FindFirstChild("Pantry")
+	local playerRestaurant = self._playerRestaurant:Get(playerPlot)
+	local backpack = playerRestaurant:GetBackpack()
 
-	local newIngredient = self._ingredient:Clone()
-	newIngredient.Parent = pantry
+	local added = backpack:AddIngredient(self._ingredient)
+
+	if added then
+		self._instance:Destroy()
+	end
 end
 
 function DroppedIngredient.Destroy(self: DroppedIngredient)

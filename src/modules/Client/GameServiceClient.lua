@@ -18,7 +18,10 @@ function GameServiceClient:Init(serviceBag: ServiceBag.ServiceBag)
 	self._serviceBag:GetService(require("GamebeastService"))
 
 	-- Internal
-	self._serviceBag:GetService(require("ItemService"))
+	self._serviceBag:GetService(require("ConfigService"))
+
+	-- Binders
+	self._serviceBag:GetService(require("PlayerRestaurantClient"))
 end
 
 return GameServiceClient

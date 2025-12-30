@@ -16,11 +16,11 @@ export type ShopItem = typeof(setmetatable(
 		_instance: Model,
 		_itemName: AttributeValue.AttributeValue<string>,
 	},
-	{} :: typeof({ __index = ShopItem })
+	ShopItem
 ))
 
 function ShopItem.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
-	local self = setmetatable({}, ShopItem)
+	local self = setmetatable({}, ShopItem) :: ShopItem
 	self._serviceBag = assert(serviceBag, "No service bag")
 	self._maid = Maid.new()
 

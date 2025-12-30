@@ -21,13 +21,15 @@
     "@quenty/loader": "^10.9.0",
     "@quenty/maid": "^3.5.0",
     "@quenty/observablecollection": "^12.24.4",
+    "@quenty/r15utils": "^13.21.4",
     "@quenty/raycaster": "^3.5.1",
     "@quenty/remoting": "^12.21.3",
     "@quenty/rx": "^13.20.0",
     "@quenty/servicebag": "^11.13.1",
     "@quenty/sounds": "^10.13.0",
     "@quenty/spawning": "^10.30.6",
-    "@quenty/valueobject": "^13.21.2"
+    "@quenty/valueobject": "^13.21.2",
+    "@quenty/weldconstraintutils": "^3.1.3"
   },
   "publishConfig": {
     "access": "restricted"

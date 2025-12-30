@@ -1,12 +1,11 @@
 local require = require(script.Parent.loader).load(script)
 
 local Binder = require("Binder")
+local ConfigService = require("ConfigService")
 local GamebeastService = require("GamebeastService")
-local ItemService = require("ItemService")
 local Maid = require("Maid")
 local Raycaster = require("Raycaster")
 local Rx = require("Rx")
-local RxAttributeUtils = require("RxAttributeUtils")
 local ServiceBag = require("ServiceBag")
 local SpawnerUtils = require("SpawnerUtils")
 local ValueObject = require("ValueObject")
@@ -19,26 +18,27 @@ export type IngredientSpawner = typeof(setmetatable(
 	{} :: {
 		_serviceBag: ServiceBag.ServiceBag,
 		_maid: Maid.Maid,
+
+		_configService: ConfigService.ConfigService,
+		_gamebeastService: GamebeastService.GamebeastService,
+
 		_instance: Model & {
 			SpawnArea: Part,
 			PrimaryPart: Part,
 		},
-		_itemService: ItemService.ItemService,
 		_spawnFrequency: ValueObject.ValueObject<number>,
 		_raycaster: Raycaster.Raycaster,
-		_gamebeastService: GamebeastService.GamebeastService,
 	},
-	{} :: typeof({ __index = IngredientSpawner })
+	IngredientSpawner
 ))
 
 function IngredientSpawner.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
-	local self = setmetatable({}, IngredientSpawner)
+	local self = setmetatable({}, IngredientSpawner) :: IngredientSpawner
 	self._serviceBag = assert(serviceBag, "No service bag")
 	self._maid = Maid.new()
 
-	self._itemService = serviceBag:GetService(ItemService)
+	self._configService = serviceBag:GetService(ConfigService)
 	self._gamebeastService = serviceBag:GetService(GamebeastService)
-	self._generalConfig = self._itemService:GetGeneralConfig()
 
 	self._instance = assert(instance, "No instance")
 
@@ -46,7 +46,8 @@ function IngredientSpawner.new(instance: Instance, serviceBag: ServiceBag.Servic
 		return not hitData.Part.CanCollide
 	end)
 
-	self._maid:GiveTask(RxAttributeUtils.observeAttribute(self._generalConfig, "IngredientSpawnFrequency")
+	self._maid:GiveTask(self._configService
+		:ObserveGeneralConfig("IngredientSpawnFrequency")
 		:Pipe({
 			Rx.switchMap(function(frequency: number)
 				return Rx.timer(0, frequency)
@@ -60,7 +61,7 @@ function IngredientSpawner.new(instance: Instance, serviceBag: ServiceBag.Servic
 end
 
 function IngredientSpawner.SpawnIngredientsAsync(self: IngredientSpawner)
-	local ingredients = self._itemService:GetIngredients()
+	local ingredients = self._configService:GetIngredients()
 
 	-- TODO: spawn varying amounts of ingredients and weight them by rarity
 
@@ -71,11 +72,11 @@ function IngredientSpawner.SpawnIngredientsAsync(self: IngredientSpawner)
 	end
 end
 
-function IngredientSpawner._spawnIngredient(self: IngredientSpawner, ingredient: ItemService.Ingredient)
+function IngredientSpawner._spawnIngredient(self: IngredientSpawner, ingredient: ConfigService.Ingredient)
 	local spawnLocation, _hitData = SpawnerUtils.getSpawnLocation(self._instance.SpawnArea, self._raycaster)
 
 	local ingredientObject = ingredient.Value:Clone()
-	ingredientObject.Parent = self._itemService:GetDroppedIngredientsFolder()
+	ingredientObject.Parent = self._configService:GetDroppedIngredientsFolder()
 	ingredientObject:PivotTo(CFrame.new(spawnLocation + Vector3.new(0, 5, 0)))
 	ingredientObject:SetAttribute("IngredientName", ingredient.Name)
 	ingredientObject:AddTag("DroppedIngredient")
