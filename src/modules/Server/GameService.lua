@@ -25,8 +25,8 @@ function GameService:Init(serviceBag: ServiceBag.ServiceBag)
 
 	-- Binders
 	self._serviceBag:GetService(require("PlayerRestaurant"))
-    self._serviceBag:GetService(require("ShopItem"))
-    self._serviceBag:GetService(require("IngredientSpawner"))
+	self._serviceBag:GetService(require("ShopItem"))
+	self._serviceBag:GetService(require("IngredientSpawner"))
 	self._serviceBag:GetService(require("DroppedIngredient"))
 end
 

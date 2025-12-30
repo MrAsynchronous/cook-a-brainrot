@@ -1,4 +1,11 @@
 {
-	"search.useIgnoreFiles": false
+  "search.useIgnoreFiles": false,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[lua]": {
+    "editor.defaultFormatter": "JohnnyMorganz.stylua"
+  },
+  "[luau]": {
+    "editor.defaultFormatter": "JohnnyMorganz.stylua"
+  }
 }
-
