@@ -15,9 +15,10 @@ function GameServiceClient:Init(serviceBag: ServiceBag.ServiceBag)
 
 	-- External
 	self._serviceBag:GetService(require("CmdrServiceClient"))
-	self._serviceBag:GetService(require("GamebeastServiceClient"))
+	self._serviceBag:GetService(require("GamebeastService"))
 
 	-- Internal
+	self._serviceBag:GetService(require("ItemService"))
 end
 
 return GameServiceClient

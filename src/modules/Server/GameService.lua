@@ -19,7 +19,15 @@ function GameService:Init(serviceBag: ServiceBag.ServiceBag)
 	self._serviceBag:GetService(require("GamebeastService"))
 
 	-- Internal
-	self._serviceBag:GetService(require("GameBindersService")) 
+	self._serviceBag:GetService(require("ItemService"))
+	self._serviceBag:GetService(require("PlayerDataService"))
+	self._serviceBag:GetService(require("GamebeastSyncService"))
+
+	-- Binders
+	self._serviceBag:GetService(require("PlayerRestaurant"))
+    self._serviceBag:GetService(require("ShopItem"))
+    self._serviceBag:GetService(require("IngredientSpawner"))
+	self._serviceBag:GetService(require("DroppedIngredient"))
 end
 
 return GameService
