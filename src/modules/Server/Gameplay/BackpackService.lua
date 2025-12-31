@@ -52,9 +52,7 @@ function BackpackService.Start(self: BackpackService)
 						end)
 				)
 
-				self._maid:GiveTask(subStore:AddSavingCallback(function()
-					subStore:Store("EquippedBackpack", equippedBackpack.Value)
-				end))
+				self._maid:GiveTask(subStore:StoreOnValueChange("EquippedBackpack", equippedBackpack))
 			end)
 		)
 

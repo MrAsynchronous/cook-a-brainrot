@@ -1,9 +1,14 @@
 local require = require(script.Parent.loader).load(script)
 
+local AttributeValue = require("AttributeValue")
 local Binder = require("Binder")
+local DataStore = require("DataStore")
+local FridgeUtils = require("FridgeUtils")
 local GamebeastService = require("GamebeastService")
+local ObjectRegion = require("ObjectRegion")
 local PlayerDataStoreService = require("PlayerDataStoreService")
 local PlayerRestaurantShared = require("PlayerRestaurantShared")
+local RxBrioUtils = require("RxBrioUtils")
 local ServiceBag = require("ServiceBag")
 
 local PlayerRestaurantServer = setmetatable({}, PlayerRestaurantShared)
@@ -14,6 +19,8 @@ export type PlayerRestaurantServer = typeof(setmetatable(
 	{} :: {
 		_playerDataStoreService: PlayerDataStoreService.PlayerDataStoreService,
 		_gamebeastService: GamebeastService.GamebeastService,
+
+		_equippedFridge: AttributeValue.AttributeValue<string>,
 	},
 	PlayerRestaurantServer
 ))
@@ -27,55 +34,56 @@ function PlayerRestaurantServer.new(instance: Instance, serviceBag: ServiceBag.S
 
 	assert(self._player, "Player not found")
 
-	-- self._maid:GivePromise(
-	-- 	self._playerDataStoreService:PromiseDataStore(self._player):Then(function(dataStore: DataStore.DataStore)
-	-- 		local subStore = dataStore:GetSubStore(self._player.SaveSlot.Value) :: DataStore.DataStore
+	self._equippedFridge = AttributeValue.new(self._instance, "EquippedFridge")
 
-	-- 		self._maid:GivePromise(subStore:Load("Pantry", {}):Then(function(pantry: { { [string]: number } })
-	-- 			for ingredientName, amount in pantry do
-	-- 				local ingredient = self._configService:GetIngredient(ingredientName)
-	-- 				if ingredient then
-	-- 					self:AddIngredientToPantry(ingredient)
-	-- 				end
-	-- 			end
-	-- 		end))
+	self._maid:GivePromise(
+		self._playerDataStoreService:PromiseDataStore(self._player):Then(function(dataStore: DataStore.DataStore)
+			local subStore = dataStore:GetSubStore(self._player.SaveSlot.Value) :: DataStore.DataStore
 
-	-- 		self._maid:GiveTask(subStore:AddSavingCallback(function()
-	-- 			local pantry = {}
-	-- 			for _, ingredientObject in self._pantry:GetChildren() do
-	-- 				if not ingredientObject:IsA("NumberValue") then
-	-- 					self._gamebeastService:TrackPlayerEventDebug(self._player, "InvalidPantryIngredientObject", {
-	-- 						action = "OnSavePantry",
-	-- 						ingredientName = ingredientObject.Name,
-	-- 						className = ingredientObject.ClassName,
-	-- 					})
+			self._maid:GivePromise(
+				subStore
+					:Load("EquippedFridge", self._configService:GetGeneralConfigValue("DefaultFridge"))
+					:Then(function(equippedFridgeName: string)
+						self._equippedFridge.Value = equippedFridgeName
+					end)
+			)
 
-	-- 					continue
-	-- 				end
+			self._maid:GiveTask(subStore:StoreOnValueChange("EquippedFridge", self._equippedFridge))
+		end)
+	)
 
-	-- 				-- no need to save 0 ingredients
-	-- 				if ingredientObject.Value == 0 then
-	-- 					continue
-	-- 				end
+	self._maid:GiveTask(self._equippedFridge
+		:ObserveBrio()
+		:Pipe({
+			RxBrioUtils.where(function(equippedFridgeName: string)
+				return equippedFridgeName ~= nil
+			end),
+		})
+		:Subscribe(function(brio)
+			local maid, equippedFridgeName = brio:ToMaidAndValue()
 
-	-- 				pantry[ingredientObject.Name] = ingredientObject.Value
-	-- 			end
+			local fridgeConfig = self._configService:GetFridge(equippedFridgeName)
+			local fridge = FridgeUtils.createFridge(fridgeConfig)
+			fridge.Parent = self._instance
+			fridge:PivotTo(self._instance.FridgeSlot:GetPivot())
 
-	-- 			subStore:Store("Pantry", pantry)
-	-- 		end))
-	-- 	end)
-	-- )
+			maid:GiveTask(fridge)
+		end))
+
+	local emptyBackpackArea = self._instance.EmptyBackpackArea
+	local emptyBackpackAreaRegion = ObjectRegion.new(self._serviceBag, emptyBackpackArea.Region, function(part)
+		local parent = part.Parent
+		if parent:IsA("Model") and parent:HasTag("ItemBackpack") then
+			return parent
+		end
+
+		return nil
+	end)
+
+	self._maid:GiveTask(emptyBackpackAreaRegion)
 
 	return self
 end
-
--- function PlayerRestaurantServer.AddIngredientToPantry(
--- 	self: PlayerRestaurantServer,
--- 	ingredient: ConfigService.Ingredient
--- )
--- 	local ingredientObject = self:_upsertIngredientObject(self._pantry, ingredient)
--- 	ingredientObject.Value += 1
--- end
 
 function PlayerRestaurantServer.Destroy(self: PlayerRestaurantServer)
 	PlayerRestaurantShared.Destroy(self)

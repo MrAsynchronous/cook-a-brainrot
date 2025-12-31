@@ -30,8 +30,8 @@ A competitive cooking tycoon game where players manage restaurants, compete for 
 
 **Backpack System**
 
-[ ] Players collect ingredients into a personal backpack (not directly into pantry)
-[ ] Backpack has limited capacity (starting capacity TBD, upgradeable)
+[X] Players collect ingredients into a personal backpack (not directly into pantry)
+[X] Backpack has limited capacity (starting capacity TBD, upgradeable)
 [ ] Players must return to their restaurant to unload backpack into pantry
 [ ] Unloading is instant interaction at pantry/storage area
 [ ] Creates strategic decisions:
@@ -348,47 +348,24 @@ A competitive cooking tycoon game where players manage restaurants, compete for 
 
 ---
 
-# Development Priority
+## To Be Determined
 
-## Phase 1: Core Loop
+[ ] Should user backpacks fall off when they die and need to be re-collected or should they remount on respawn
+[ ] This determines the usefulness of dropped backpacks \* Dropped backpacks is more complex mechanics but makes sense if brainrots can die
+[ ] Can brainrots die?
 
-1. Player plots and spawn system
-2. Central ingredient spawning (3-minute timer)
-3. Backpack system (collection and capacity)
-4. Pantry system and unloading mechanics
-5. Simple stove placement (10 slots)
-6. Manual cooking (without brainrot workers)
-7. Basic selling system
+- i.e if they're robbed a lot
 
-## Phase 2: Automation
+Two paths
 
-1. Brainrot worker system (Chef type)
-2. Auto-cooking mechanics
-3. Worker assignment UI
-4. Basic brainrot recipes (3-5 types)
+1.  Brainrots don't die but backpacks can be stolen from (backpacks themselves don't get taken just the contents)
+    - no need for backpack dropping, that mechanic just get's disabled
+2.  Brainrots can die or backpacks can be lost
+    - requires mechanic for user to drop current bag to pick another one up?
+      2.5 Dropped backpacks, when picked up, just add items from backpack to current backpack
+    - then there's no need to define functionality where players have a backpack but need to equip
 
-## Phase 3: Active Gameplay
+Another idea
 
-1. Fire mechanic (natural fires)
-2. Fire extinguishing system
-3. Arson (PvP fire starting)
-4. Theft mechanics
-
-## Phase 4: Progression
-
-1. Stove slot unlocking
-2. Manager brainrot and passive income
-3. Net worth calculation
-4. Additional worker types (Runner, Guard)
-   - Runner brainrots: auto-collection and backpack unloading
-5. Defense systems
-6. Backpack capacity upgrades
-
-## Phase 5: Polish & Balance
-
-1. Brainrot tier system
-2. Ingredient rarity and balance
-3. Economy balancing
-4. PvP cooldowns and limits
-5. Leaderboards
-6. Tutorial system
+- Backpacks are ephermeral. They only exist during an ingredient raid
+  - could be appied automatically by the server or require users to pick up backpack before leaving
