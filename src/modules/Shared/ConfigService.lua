@@ -40,6 +40,14 @@ export type Backpack = ObjectValue & {
 	},
 }
 
+export type Fridge = ObjectValue & {
+	Value: Model,
+	Type: StringValue & {
+		Value: "Fridge",
+	},
+	Capacity: NumberValue,
+}
+
 export type Item = Ingredient | Brainrot | Backpack
 
 local ConfigService = {}
@@ -53,11 +61,13 @@ export type ConfigService = typeof(ConfigService) & {
 		Ingredients: Folder,
 		ItemRarities: Folder,
 		Backpacks: Folder,
+		Fridges: Folder,
 	},
 	_assetsFolder: Folder & {
 		Brainrot: Folder,
 		Ingredients: Folder,
 		Backpacks: Folder,
+		Fridges: Folder,
 	},
 	_droppedIngredientsFolder: Folder,
 }
@@ -84,6 +94,14 @@ end
 
 function ConfigService.GetBackpack(self: ConfigService, backpackName: string): Backpack
 	return self._configContainer.Backpacks:FindFirstChild(backpackName) :: Backpack
+end
+
+function ConfigService.GetFridges(self: ConfigService): { Fridge }
+	return self._configContainer.Fridges:GetChildren() :: { Fridge }
+end
+
+function ConfigService.GetFridge(self: ConfigService, fridgeName: string): Fridge
+	return self._configContainer.Fridges:FindFirstChild(fridgeName) :: Fridge
 end
 
 function ConfigService.GetDroppedIngredientsFolder(self: ConfigService): Folder

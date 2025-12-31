@@ -10,10 +10,13 @@ local PlayerRestaurantServer = setmetatable({}, PlayerRestaurantShared)
 PlayerRestaurantServer.__index = PlayerRestaurantServer
 PlayerRestaurantServer.ServiceName = "PlayerRestaurantServer"
 
-export type PlayerRestaurantServer = typeof(PlayerRestaurantServer) & {
-	_playerDataStoreService: PlayerDataStoreService.PlayerDataStoreService,
-	_gamebeastService: GamebeastService.GamebeastService,
-} & PlayerRestaurantShared.PlayerRestaurantShared
+export type PlayerRestaurantServer = typeof(setmetatable(
+	{} :: {
+		_playerDataStoreService: PlayerDataStoreService.PlayerDataStoreService,
+		_gamebeastService: GamebeastService.GamebeastService,
+	},
+	PlayerRestaurantServer
+))
 
 function PlayerRestaurantServer.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
 	local self =

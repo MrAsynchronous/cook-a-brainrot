@@ -40,6 +40,10 @@ function GamebeastSyncService.Start(self: GamebeastSyncService)
 	self._maid:GiveTask(self._gamebeastService:ObserveConfig("Backpacks"):Subscribe(function(backpacks: any)
 		self:_syncBackpack(backpacks)
 	end))
+
+	self._maid:GiveTask(self._gamebeastService:ObserveConfig("Fridges"):Subscribe(function(fridges: any)
+		self:_syncFridge(fridges)
+	end))
 end
 
 function GamebeastSyncService._syncItemRarity(self: GamebeastSyncService, gbRarities: { { Color: string } })
@@ -76,6 +80,16 @@ function GamebeastSyncService._syncBackpack(self: GamebeastSyncService, gbBackpa
 
 		if gbBackpack then
 			backpack.Capacity.Value = gbBackpack.Capacity
+		end
+	end
+end
+
+function GamebeastSyncService._syncFridge(self: GamebeastSyncService, gbFridges: { { Capacity: number } })
+	for _, fridge in self._configService:GetFridges() do
+		local gbFridge = gbFridges[fridge.Name]
+
+		if gbFridge then
+			fridge.Capacity.Value = gbFridge.Capacity
 		end
 	end
 end
