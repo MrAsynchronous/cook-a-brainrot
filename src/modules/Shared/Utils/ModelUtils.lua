@@ -11,4 +11,14 @@ function ModelUtils.setModelAnchored(model: Model, anchored: boolean)
 	end
 end
 
+function ModelUtils.setModelCanCollide(model: Model, canCollide: boolean)
+	for _, descendant in model:GetDescendants() do
+		if not descendant:IsA("BasePart") then
+			continue
+		end
+
+		descendant.CanCollide = canCollide
+	end
+end
+
 return ModelUtils

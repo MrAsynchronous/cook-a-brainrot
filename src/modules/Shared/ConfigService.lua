@@ -2,10 +2,8 @@ local require = require(script.Parent.loader).load(script)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
 local Observable = require("Observable")
-local Rx = require("Rx")
 local RxAttributeUtils = require("RxAttributeUtils")
 local ServiceBag = require("ServiceBag")
 
@@ -18,6 +16,9 @@ export type Ingredient = ObjectValue & {
 	Rarity: ObjectValue & {
 		Value: Rarity,
 	},
+	Type: StringValue & {
+		Value: "Ingredient",
+	},
 }
 
 export type Brainrot = ObjectValue & {
@@ -25,13 +26,21 @@ export type Brainrot = ObjectValue & {
 	Rarity: ObjectValue & {
 		Value: Rarity,
 	},
+	Type: StringValue & {
+		Value: "Brainrot",
+	},
 	Recipe: Folder,
 }
 
 export type Backpack = ObjectValue & {
 	Value: Model,
 	Capacity: NumberValue,
+	Type: StringValue & {
+		Value: "Backpack",
+	},
 }
+
+export type Item = Ingredient | Brainrot | Backpack
 
 local ConfigService = {}
 ConfigService.ServiceName = "ConfigService"

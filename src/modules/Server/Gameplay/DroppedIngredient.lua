@@ -1,13 +1,14 @@
 local require = require(script.Parent.loader).load(script)
 
 local AttributeValue = require("AttributeValue")
+local BackpackUtils = require("BackpackUtils")
 local Binder = require("Binder")
 local Blend = require("Blend")
 local ConfigService = require("ConfigService")
 local GamebeastService = require("GamebeastService")
+local ItemBackpack = require("ItemBackpack")
 local Maid = require("Maid")
 local ModelUtils = require("ModelUtils")
-local PlayerRestaurantServer = require("PlayerRestaurantServer")
 local PlayerUtils = require("PlayerUtils")
 local Rx = require("Rx")
 local ServiceBag = require("ServiceBag")
@@ -22,11 +23,12 @@ export type DroppedIngredient = typeof(DroppedIngredient) & {
 
 	_configService: ConfigService.ConfigService,
 	_gamebeastService: GamebeastService.GamebeastService,
-	_playerRestaurant: Binder.Binder<PlayerRestaurantServer.PlayerRestaurantServer>,
 
 	_instance: Instance,
 	_ingredientName: AttributeValue.AttributeValue<string>,
 	_ingredient: ConfigService.Ingredient,
+	_itemBackpackBinder: Binder.Binder<ItemBackpack.ItemBackpack>,
+	_collected: AttributeValue.AttributeValue<boolean>,
 }
 
 function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
@@ -37,7 +39,7 @@ function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.Servic
 
 	self._configService = serviceBag:GetService(ConfigService)
 	self._gamebeastService = serviceBag:GetService(GamebeastService)
-	self._playerRestaurant = serviceBag:GetService(PlayerRestaurantServer)
+	self._itemBackpackBinder = serviceBag:GetService(ItemBackpack)
 
 	self._instance = assert(instance, "No instance")
 	self._ingredientName = AttributeValue.new(self._instance, "IngredientName")
@@ -87,13 +89,16 @@ function DroppedIngredient._collectIngredient(self: DroppedIngredient, player: P
 		})
 	end
 
-	local playerRestaurant = self._playerRestaurant:Get(playerPlot)
-	local backpack = playerRestaurant:GetBackpack()
+	local character = player.Character
+	local backpackAsset = BackpackUtils.getEntityBackpack(character)
+	local backpack = self._itemBackpackBinder:Get(backpackAsset)
 
-	local added = backpack:AddIngredient(self._ingredient)
+	local added = backpack:AddItem(self._ingredient)
 
 	if added then
 		self._instance:Destroy()
+	else
+		self._collected.Value = false
 	end
 end
 

@@ -1,11 +1,7 @@
 local require = require(script.Parent.loader).load(script)
 
 local Binder = require("Binder")
-local Blend = require("Blend")
-local ConfigService = require("ConfigService")
-local DataStore = require("DataStore")
 local GamebeastService = require("GamebeastService")
-local PlayerBackpackServer = require("PlayerBackpackServer")
 local PlayerDataStoreService = require("PlayerDataStoreService")
 local PlayerRestaurantShared = require("PlayerRestaurantShared")
 local ServiceBag = require("ServiceBag")
@@ -17,8 +13,6 @@ PlayerRestaurantServer.ServiceName = "PlayerRestaurantServer"
 export type PlayerRestaurantServer = typeof(PlayerRestaurantServer) & {
 	_playerDataStoreService: PlayerDataStoreService.PlayerDataStoreService,
 	_gamebeastService: GamebeastService.GamebeastService,
-
-	_backpack: PlayerBackpackServer.PlayerBackpackServer,
 } & PlayerRestaurantShared.PlayerRestaurantShared
 
 function PlayerRestaurantServer.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
@@ -29,25 +23,6 @@ function PlayerRestaurantServer.new(instance: Instance, serviceBag: ServiceBag.S
 	self._gamebeastService = serviceBag:GetService(GamebeastService)
 
 	assert(self._player, "Player not found")
-
-	self._backpack = PlayerBackpackServer.new(serviceBag, self._player)
-
-	-- self._maid:GiveTask(Blend.mount(self._instance, {
-	-- 	Blend.New "Folder" {
-	-- 		Name = "Pantry",
-
-	-- 		[Blend.Instance] = function(folder: Folder)
-	-- 			self._pantry = folder
-	-- 		end,
-	-- 	},
-	-- 	Blend.New "Folder" {
-	-- 		Name = "Backpack",
-
-	-- 		[Blend.Instance] = function(folder: Folder)
-	-- 			self._backpack = folder
-	-- 		end,
-	-- 	},
-	-- }))
 
 	-- self._maid:GivePromise(
 	-- 	self._playerDataStoreService:PromiseDataStore(self._player):Then(function(dataStore: DataStore.DataStore)
@@ -89,10 +64,6 @@ function PlayerRestaurantServer.new(instance: Instance, serviceBag: ServiceBag.S
 	-- )
 
 	return self
-end
-
-function PlayerRestaurantServer.GetBackpack(self: PlayerRestaurantServer): PlayerBackpackServer.PlayerBackpackServer
-	return self._backpack
 end
 
 -- function PlayerRestaurantServer.AddIngredientToPantry(
