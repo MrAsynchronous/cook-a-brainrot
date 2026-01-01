@@ -41,7 +41,7 @@ function GamebeastService.TrackEventDebug(self: GamebeastService, eventName: str
 		return error("GamebeastService.TrackDebugEvent is only available on the server")
 	end
 
-	if not self._configService:GetGeneralConfigValue("DebugEnabled") then
+	if not self._configService:GetGameConfigData().DebugEnabled.Value then
 		return
 	end
 
@@ -80,7 +80,7 @@ function GamebeastService.TrackPlayerEventDebug(
 		return error("GamebeastService.TrackUserDebugEvent is only available on the server")
 	end
 
-	if not self._configService:GetGeneralConfigValue("DebugEnabled") then
+	if not self._configService:GetGameConfigData().DebugEnabled.Value then
 		return
 	end
 

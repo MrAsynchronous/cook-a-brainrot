@@ -1,9 +1,9 @@
 local require = require(script.Parent.loader).load(script)
 
 local AttributeValue = require("AttributeValue")
-local BackpackUtils = require("BackpackUtils")
 local ConfigService = require("ConfigService")
 local DataStore = require("DataStore")
+local IngredientBackpackData = require("IngredientBackpackData")
 local Maid = require("Maid")
 local PlayerDataStoreService = require("PlayerDataStoreService")
 local RxBrioUtils = require("RxBrioUtils")
@@ -36,20 +36,16 @@ function BackpackService.Start(self: BackpackService)
 
 		local equippedBackpack = AttributeValue.new(player, "EquippedBackpack")
 
-		local playerBackpackReference = Instance.new("ObjectValue")
-		playerBackpackReference.Name = "CurrentBackpack"
-		playerBackpackReference.Parent = player
-
 		maid:GivePromise(
 			self._playerDataStoreService:PromiseDataStore(player):Then(function(dataStore: DataStore.DataStore)
 				local subStore = dataStore:GetSubStore(player.SaveSlot.Value) :: DataStore.DataStore
 
+				local defaultBackpack = self._configService:GetGameConfig().DefaultBackpack.Value
+
 				self._maid:GivePromise(
-					subStore
-						:Load("EquippedBackpack", self._configService:GetGeneralConfigValue("DefaultBackpack"))
-						:Then(function(equippedBackpackName: string)
-							equippedBackpack.Value = equippedBackpackName
-						end)
+					subStore:Load("EquippedBackpack", defaultBackpack):Then(function(equippedBackpackName: string)
+						equippedBackpack.Value = equippedBackpackName
+					end)
 				)
 
 				self._maid:GiveTask(subStore:StoreOnValueChange("EquippedBackpack", equippedBackpack))
@@ -66,18 +62,27 @@ function BackpackService.Start(self: BackpackService)
 			:Subscribe(function(brio)
 				local maid, equippedBackpackName = brio:ToMaidAndValue()
 
-				local backpackConfig = self._configService:GetBackpack(equippedBackpackName)
-				local backpack = BackpackUtils.createBackpack(backpackConfig, "Ingredient")
-				playerBackpackReference.Value = backpack
+				local backpackAsset = self._configService:GetBackpackAsset(equippedBackpackName):Clone()
+				local backpackConfig = self._configService:GetBackpackConfig(equippedBackpackName)
+				IngredientBackpackData:Set(backpackAsset, backpackConfig.Value)
 
-				maid:GiveTask(backpack)
+				local backpackData = IngredientBackpackData:Create(backpackAsset)
+
+				backpackAsset:AddTag("IngredientBackpack")
+
+				maid:GiveTask(RxCharacterUtils.observeCharacter(player):Subscribe(function(character)
+					if not character then
+						return
+					end
+
+					backpackAsset.Parent = character
+				end))
+
+				-- track upstream config changes
+				maid:GiveTask(backpackConfig:Observe():Subscribe(function(data)
+					backpackData.Capacity.Value = data.Capacity
+				end))
 			end))
-
-		maid:GiveTask(RxCharacterUtils.observeCharacterBrio(player):Subscribe(function(brio)
-			local maid, character = brio:ToMaidAndValue()
-
-			playerBackpackReference.Value.Parent = character
-		end))
 	end))
 end
 

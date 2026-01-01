@@ -5,8 +5,9 @@ local BackpackUtils = require("BackpackUtils")
 local Binder = require("Binder")
 local Blend = require("Blend")
 local ConfigService = require("ConfigService")
+local DroppedIngredientData = require("DroppedIngredientData")
 local GamebeastService = require("GamebeastService")
-local ItemBackpack = require("ItemBackpack")
+local IngredientBackpack = require("IngredientBackpack")
 local Maid = require("Maid")
 local ModelUtils = require("ModelUtils")
 local PlayerUtils = require("PlayerUtils")
@@ -27,8 +28,10 @@ export type DroppedIngredient = typeof(DroppedIngredient) & {
 	_instance: Instance,
 	_ingredientName: AttributeValue.AttributeValue<string>,
 	_ingredient: ConfigService.Ingredient,
-	_itemBackpackBinder: Binder.Binder<ItemBackpack.ItemBackpack>,
+	_IngredientBackpackBinder: Binder.Binder<IngredientBackpack.IngredientBackpack>,
 	_collected: AttributeValue.AttributeValue<boolean>,
+
+	_data: any,
 }
 
 function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.ServiceBag)
@@ -39,30 +42,28 @@ function DroppedIngredient.new(instance: Instance, serviceBag: ServiceBag.Servic
 
 	self._configService = serviceBag:GetService(ConfigService)
 	self._gamebeastService = serviceBag:GetService(GamebeastService)
-	self._itemBackpackBinder = serviceBag:GetService(ItemBackpack)
+	self._IngredientBackpackBinder = serviceBag:GetService(IngredientBackpack)
 
 	self._instance = assert(instance, "No instance")
-	self._ingredientName = AttributeValue.new(self._instance, "IngredientName")
-	self._collected = AttributeValue.new(self._instance, "Collected", false)
 
-	self._ingredient = self._configService:GetIngredient(self._ingredientName.Value)
+	self._data = DroppedIngredientData:Create(self._instance)
 
 	self._proximityPromptRender = Blend.New "ProximityPrompt" {
 		ActionText = "Pickup",
-		ObjectText = self._ingredientName.Value,
+		ObjectText = self._data.Name.Value,
 		RequiresLineOfSight = false,
-		Enabled = self._collected:Observe():Pipe({
+		Enabled = self._data.Collected:Observe():Pipe({
 			Rx.map(function(collected: boolean)
 				return not collected
 			end),
 		}),
 
 		[Blend.OnEvent "Triggered"] = function(player: Player)
-			if self._collected.Value then
+			if self._data.Collected.Value then
 				return
 			end
 
-			self._collected.Value = true
+			self._data.Collected.Value = true
 
 			return self:_collectIngredient(player)
 		end,
@@ -79,7 +80,7 @@ end
 
 function DroppedIngredient._collectIngredient(self: DroppedIngredient, player: Player)
 	self._gamebeastService:TrackPlayerEvent(player, "IngredientCollected", {
-		IngredientName = self._ingredientName.Value,
+		IngredientName = self._data.Name.Value,
 	})
 
 	local playerPlot = PlayerUtils.getPlayerPlot(player)
@@ -91,14 +92,14 @@ function DroppedIngredient._collectIngredient(self: DroppedIngredient, player: P
 
 	local character = player.Character
 	local backpackAsset = BackpackUtils.getEntityBackpack(character)
-	local backpack = self._itemBackpackBinder:Get(backpackAsset)
+	local backpack = self._IngredientBackpackBinder:Get(backpackAsset)
 
-	local added = backpack:AddItem(self._ingredient)
+	local added = backpack:AddItem(self._instance)
 
 	if added then
 		self._instance:Destroy()
 	else
-		self._collected.Value = false
+		self._data.Collected.Value = false
 	end
 end
 

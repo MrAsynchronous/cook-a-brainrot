@@ -9,6 +9,7 @@
   ],
   "license": "UNLICENSED",
   "dependencies": {
+    "@quenty/adorneedata": "^7.22.6",
     "@quenty/attributeutils": "^14.20.1",
     "@quenty/baseobject": "^10.9.0",
     "@quenty/binder": "^14.25.2",

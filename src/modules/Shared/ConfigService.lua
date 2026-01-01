@@ -3,52 +3,14 @@ local require = require(script.Parent.loader).load(script)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
-local Observable = require("Observable")
-local RxAttributeUtils = require("RxAttributeUtils")
+local FridgeData = require("FridgeData")
+local GameConfigData = require("GameConfigData")
+local IngredientBackpackConfigData = require("IngredientBackpackConfigData")
+local IngredientData = require("IngredientData")
+local RarityConfigData = require("RarityConfigData")
 local ServiceBag = require("ServiceBag")
-
-export type Rarity = Configuration & {
-	Color: Color3Value,
-}
-
-export type Ingredient = ObjectValue & {
-	Value: Model,
-	Rarity: ObjectValue & {
-		Value: Rarity,
-	},
-	Type: StringValue & {
-		Value: "Ingredient",
-	},
-}
-
-export type Brainrot = ObjectValue & {
-	Value: Model,
-	Rarity: ObjectValue & {
-		Value: Rarity,
-	},
-	Type: StringValue & {
-		Value: "Brainrot",
-	},
-	Recipe: Folder,
-}
-
-export type Backpack = ObjectValue & {
-	Value: Model,
-	Capacity: NumberValue,
-	Type: StringValue & {
-		Value: "Backpack",
-	},
-}
-
-export type Fridge = ObjectValue & {
-	Value: Model,
-	Type: StringValue & {
-		Value: "Fridge",
-	},
-	Capacity: NumberValue,
-}
-
-export type Item = Ingredient | Brainrot | Backpack
+local StoveConfigData = require("StoveConfigData")
+local StoveSlotConfigData = require("StoveSlotConfigData")
 
 local ConfigService = {}
 ConfigService.ServiceName = "ConfigService"
@@ -62,63 +24,105 @@ export type ConfigService = typeof(ConfigService) & {
 		ItemRarities: Folder,
 		Backpacks: Folder,
 		Fridges: Folder,
+		Stoves: Folder,
+		StoveSlots: Folder,
 	},
 	_assetsFolder: Folder & {
 		Brainrot: Folder,
 		Ingredients: Folder,
 		Backpacks: Folder,
 		Fridges: Folder,
+		Stoves: Folder,
 	},
-	_droppedIngredientsFolder: Folder,
 }
 
-function ConfigService.GetItemRarities(self: ConfigService): { Rarity }
-	return self._configContainer.ItemRarities:GetChildren() :: { Rarity }
+function ConfigService.GetStoveSlotConfig(self: ConfigService, slotId: string)
+	local slotObject = self._configContainer.StoveSlots:FindFirstChild(slotId)
+	if not slotObject then
+		return nil
+	end
+
+	return StoveSlotConfigData:Create(slotObject)
 end
 
-function ConfigService.GetRarity(self: ConfigService, rarityName: string): Rarity
-	return self._configContainer.ItemRarities:FindFirstChild(rarityName) :: Rarity
+function ConfigService.GetRarityConfig(self: ConfigService, rarityName: string)
+	local rarityObject = self:_findObject(self._configContainer.ItemRarities, rarityName)
+	if not rarityObject then
+		return nil
+	end
+
+	return RarityConfigData:Create(rarityObject)
 end
 
-function ConfigService.GetIngredients(self: ConfigService): { Ingredient }
-	return self._configContainer.Ingredients:GetChildren() :: { Ingredient }
+function ConfigService.GetIngredientConfig(self: ConfigService, ingredientName: string)
+	local ingredientObject = self:_findObject(self._configContainer.Ingredients, ingredientName)
+	if not ingredientObject then
+		return nil
+	end
+
+	return IngredientData:Create(ingredientObject)
 end
 
-function ConfigService.GetIngredient(self: ConfigService, ingredientName: string): Ingredient?
-	return self._configContainer.Ingredients:FindFirstChild(ingredientName) :: Ingredient
+function ConfigService.GetBackpackConfig(self: ConfigService, backpackName: string)
+	local backpackObject = self:_findObject(self._configContainer.Backpacks, backpackName)
+	if not backpackObject then
+		return nil
+	end
+
+	return IngredientBackpackConfigData:Create(backpackObject)
 end
 
-function ConfigService.GetBackpacks(self: ConfigService): { Backpack }
-	return self._configContainer.Backpacks:GetChildren() :: { Backpack }
+function ConfigService.GetFridgeConfig(self: ConfigService, fridgeName: string)
+	local fridgeObject = self._configContainer.Fridges:FindFirstChild(fridgeName)
+	if not fridgeObject then
+		return nil
+	end
+
+	return FridgeData:Create(fridgeObject)
 end
 
-function ConfigService.GetBackpack(self: ConfigService, backpackName: string): Backpack
-	return self._configContainer.Backpacks:FindFirstChild(backpackName) :: Backpack
+function ConfigService.GetStoveConfig(self: ConfigService, stoveName: string)
+	local stoveObject = self._configContainer.Stoves:FindFirstChild(stoveName)
+	if not stoveObject then
+		return nil
+	end
+
+	return StoveConfigData:Create(stoveObject)
 end
 
-function ConfigService.GetFridges(self: ConfigService): { Fridge }
-	return self._configContainer.Fridges:GetChildren() :: { Fridge }
+function ConfigService.GetGameConfig(self: ConfigService)
+	return GameConfigData:Create(self._configContainer)
 end
 
-function ConfigService.GetFridge(self: ConfigService, fridgeName: string): Fridge
-	return self._configContainer.Fridges:FindFirstChild(fridgeName) :: Fridge
+function ConfigService.GetIngredientAsset(self: ConfigService, ingredientName: string): Model
+	return self._assetsFolder.Ingredients:FindFirstChild(ingredientName) :: Model
 end
 
-function ConfigService.GetDroppedIngredientsFolder(self: ConfigService): Folder
-	return self._droppedIngredientsFolder
+function ConfigService.GetBackpackAsset(self: ConfigService, backpackName: string): Model
+	return self._assetsFolder.Backpacks:FindFirstChild(backpackName) :: Model
 end
 
-function ConfigService.GetGeneralConfigValue<T>(self: ConfigService, config: string): T?
-	return self._configContainer:GetAttribute(config) :: T?
+function ConfigService.GetFridgeAsset(self: ConfigService, fridgeName: string): Model
+	return self._assetsFolder.Fridges:FindFirstChild(fridgeName) :: Model
 end
 
-function ConfigService.ObserveGeneralConfig<T>(self: ConfigService, config: string): Observable.Observable<T?>
-	local generalConfig = self._configContainer
-	return RxAttributeUtils.observeAttribute(generalConfig, config)
+function ConfigService.GetStoveAsset(self: ConfigService, stoveName: string): Model
+	return self._assetsFolder.Stoves:FindFirstChild(stoveName) :: Model
 end
 
-function ConfigService.GetConfigContainer(self: ConfigService): Configuration
+function ConfigService.GetConfigContainer(self: ConfigService)
 	return self._configContainer
+end
+
+function ConfigService._findObject(self: ConfigService, folder: Folder, name: string)
+	local object = folder:FindFirstChild(name)
+	if not object then
+		warn(string.format("Object not found for %s", name))
+
+		return nil
+	end
+
+	return object
 end
 
 function ConfigService.Init(self: ConfigService, serviceBag: ServiceBag.ServiceBag)
@@ -142,11 +146,6 @@ function ConfigService._initServer(self: ConfigService)
 	self._assetsFolder.Parent = ReplicatedStorage
 
 	self._configContainer = ReplicatedStorage:WaitForChild("GameConfig")
-
-	-- create container folders
-	self._droppedIngredientsFolder = Instance.new("Folder")
-	self._droppedIngredientsFolder.Parent = Workspace
-	self._droppedIngredientsFolder.Name = "Dropped Ingredients"
 end
 
 function ConfigService._initClient(self: ConfigService)
@@ -155,8 +154,8 @@ function ConfigService._initClient(self: ConfigService)
 	end
 
 	self._configContainer = ReplicatedStorage:WaitForChild("GameConfig")
+
 	self._assetsFolder = ReplicatedStorage:WaitForChild("Assets")
-	self._droppedIngredientsFolder = Workspace:WaitForChild("Dropped Ingredients")
 end
 
 return ConfigService

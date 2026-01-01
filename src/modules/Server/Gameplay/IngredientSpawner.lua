@@ -1,7 +1,10 @@
 local require = require(script.Parent.loader).load(script)
 
+local Workspace = game:GetService("Workspace")
+
 local Binder = require("Binder")
 local ConfigService = require("ConfigService")
+local DroppedIngredientData = require("DroppedIngredientData")
 local GamebeastService = require("GamebeastService")
 local Maid = require("Maid")
 local Raycaster = require("Raycaster")
@@ -9,6 +12,13 @@ local Rx = require("Rx")
 local ServiceBag = require("ServiceBag")
 local SpawnerUtils = require("SpawnerUtils")
 local ValueObject = require("ValueObject")
+
+local LOOT_TABLE = {
+	"Banana",
+	"Watermelon",
+	"Crab Shell",
+	"Coconut",
+}
 
 local IngredientSpawner = {}
 IngredientSpawner.__index = IngredientSpawner
@@ -47,7 +57,8 @@ function IngredientSpawner.new(instance: Instance, serviceBag: ServiceBag.Servic
 	end)
 
 	self._maid:GiveTask(self._configService
-		:ObserveGeneralConfig("IngredientSpawnFrequency")
+		:GetGameConfig().IngredientSpawnFrequency
+		:Observe()
 		:Pipe({
 			Rx.switchMap(function(frequency: number)
 				return Rx.timer(0, frequency)
@@ -61,28 +72,29 @@ function IngredientSpawner.new(instance: Instance, serviceBag: ServiceBag.Servic
 end
 
 function IngredientSpawner.SpawnIngredientsAsync(self: IngredientSpawner)
-	local ingredients = self._configService:GetIngredients()
-
 	-- TODO: spawn varying amounts of ingredients and weight them by rarity
 
-	for _, ingredient in ingredients do
-		self:_spawnIngredient(ingredient)
+	for _, ingredientName in LOOT_TABLE do
+		self:_spawnIngredient(ingredientName)
 
 		task.wait(0.1)
 	end
 end
 
-function IngredientSpawner._spawnIngredient(self: IngredientSpawner, ingredient: ConfigService.Ingredient)
+function IngredientSpawner._spawnIngredient(self: IngredientSpawner, ingredientName: string)
 	local spawnLocation, _hitData = SpawnerUtils.getSpawnLocation(self._instance.SpawnArea, self._raycaster)
 
-	local ingredientObject = ingredient.Value:Clone()
-	ingredientObject.Parent = self._configService:GetDroppedIngredientsFolder()
-	ingredientObject:PivotTo(CFrame.new(spawnLocation + Vector3.new(0, 5, 0)))
-	ingredientObject:SetAttribute("IngredientName", ingredient.Name)
-	ingredientObject:AddTag("DroppedIngredient")
+	local ingredientConfig = self._configService:GetIngredientConfig(ingredientName)
+	local asset = self._configService:GetIngredientAsset(ingredientName):Clone()
+	asset:PivotTo(CFrame.new(spawnLocation + Vector3.new(0, 5, 0)))
+	asset:AddTag("DroppedIngredient")
 
-	self._gamebeastService:TrackEvent("IngredienetSpawned", {
-		IngredientName = ingredient.Name,
+	DroppedIngredientData:Set(asset, ingredientConfig.Value)
+
+	asset.Parent = Workspace.Terrain
+
+	self._gamebeastService:TrackEvent("IngredientSpawned", {
+		IngredientName = ingredientName,
 	})
 end
 

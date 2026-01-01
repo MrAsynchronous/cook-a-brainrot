@@ -350,6 +350,8 @@ A competitive cooking tycoon game where players manage restaurants, compete for 
 
 ## To Be Determined
 
+### Backpack Functionality
+
 [ ] Should user backpacks fall off when they die and need to be re-collected or should they remount on respawn
 [ ] This determines the usefulness of dropped backpacks \* Dropped backpacks is more complex mechanics but makes sense if brainrots can die
 [ ] Can brainrots die?
@@ -365,7 +367,6 @@ Two paths
       2.5 Dropped backpacks, when picked up, just add items from backpack to current backpack
     - then there's no need to define functionality where players have a backpack but need to equip
 
-Another idea
+### Decision
 
-- Backpacks are ephermeral. They only exist during an ingredient raid
-  - could be appied automatically by the server or require users to pick up backpack before leaving
+- backpacks cannot be dropped or lost. they stick with the user
